@@ -8,4 +8,5 @@
 **/*.zip
 **/*.tar.gz
 **/*.sgm
+download_utils.jl
 Manifest.toml
