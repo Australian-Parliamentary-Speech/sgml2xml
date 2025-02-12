@@ -78,7 +78,7 @@ function sgml2xml_run(which_chamber)
         date,senate,reps = row
         day,month,year = split(date,"/")
         month,day = number_pro(parse(Int,month)),number_pro(parse(Int,day))
-        date = "$(year)_$(month)_$(day).xml"
+        date = "$(year)_$(month)_$(day)"
  
         if which_chamber == :house
             chamber_link = reps
@@ -87,7 +87,7 @@ function sgml2xml_run(which_chamber)
         end
         if !ismissing(chamber_link)
             full_chamber_link = "https://$chamber_link"
-            sgml_fn = joinpath(pwd(),"$(which_chamber)_sgmls","date.sgm")
+            sgml_fn = joinpath(pwd(),"$(which_chamber)_sgmls","$date.sgm")
             create_dir(joinpath(pwd(),"$(which_chamber)_sgmls"))
 
             try
