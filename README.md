@@ -1,16 +1,23 @@
 [![Documentation](https://github.com/Australian-Parliamentary-Speech/Scraper/actions/workflows/documentation.yml/badge.svg)](https://australian-parliamentary-speech.github.io/sgml2xml/)
 
-# To run 1981-1996
+# To get xmls from 1981-1996
+
+Input required: HansardSGML.csv
+
+The sgml2xml function downloads the sgml and converts them into xmls. 
 
 To run house of representatives:
 
-sgml2xml\_run(:house)
-
+```julia
+sgml2xml_run(:house)
+```
 To run senate:
 
-sgml2xml\_run(:senate)
+```julia
+sgml2xml_run(:senate)
+```
 
-# to run 1997 (only house)
+# to get xmls from 1997 (only house)
 
 1997 does not exist in the spreadsheet provided by the library. We generated the links using the function link\_gen(year,month,day):
 
@@ -21,7 +28,11 @@ sgml2xml\_run(:senate)
     end
 ```
 
-one\_year\_run()
+one\_year\_run() also downloads the sgmls and converts them into xmls:
+
+```julia
+one_year_run()
+```
 
 
 
