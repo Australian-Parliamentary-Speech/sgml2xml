@@ -1,5 +1,3 @@
-[![Documentation](https://github.com/Australian-Parliamentary-Speech/Scraper/actions/workflows/documentation.yml/badge.svg)](https://australian-parliamentary-speech.github.io/sgml2xml/)
-
 # To get xmls from 1981-1996
 
 Input required: HansardSGML.csv
