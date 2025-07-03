@@ -2,8 +2,24 @@ using PyCall
 using CSV
 using HTTP
 using ProgressMeter
+using ArgParse
 include("download_utils.jl")
 
+function get_args()
+    s = ArgParseSettings()
+    @add_arg_table s begin
+        "which_house"
+            required = true
+    end
+    return parse_args(s)
+end
+
+function main()
+    args = get_args()
+    which_house = args["which_house"]
+    sgml2xml_run(which_house)
+end
+ 
 
 function download_(url,outputname)
     response = get_response(url)
@@ -45,8 +61,8 @@ function one_year_run()
             month,day = number_pro(month_),number_pro(day_)
             link = link_gen(year,month,day)
             link = "https://$link"
-            sgml_fn = joinpath(pwd(),"$(which_chamber)_sgmls","$(day)_$(month)_$(year).sgm")
-            create_dir(joinpath(pwd(),"$(which_chamber)_sgmls"))
+            sgml_fn = joinpath(pwd(),"$(which_house)_sgmls","$(day)_$(month)_$(year).sgm")
+            create_dir(joinpath(pwd(),"$(which_house)_sgmls"))
 
             try
                 download_(link,sgml_fn)
@@ -67,7 +83,8 @@ function number_pro(num)
     return num
 end
 
-function sgml2xml_run(which_chamber)
+function sgml2xml_run(which_house)
+    which_house = Symbol(which_house)
     csv_fn = "HansardSGML.csv"
     rows = CSV.Rows(csv_fn)
     failed = []
@@ -80,20 +97,20 @@ function sgml2xml_run(which_chamber)
         month,day = number_pro(parse(Int,month)),number_pro(parse(Int,day))
         date = "$(year)_$(month)_$(day)"
  
-        if which_chamber == :house
+        if which_house == :house
             chamber_link = reps
-        elseif which_chamber == :senate
+        elseif which_house == :senate
             chamber_link = senate
         end
         if !ismissing(chamber_link)
             full_chamber_link = "https://$chamber_link"
-            sgml_fn = joinpath(pwd(),"$(which_chamber)_sgmls","$date.sgm")
-            create_dir(joinpath(pwd(),"$(which_chamber)_sgmls"))
+            sgml_fn = joinpath(pwd(),"$(which_house)_sgmls","$date.sgm")
+            create_dir(joinpath(pwd(),"$(which_house)_sgmls"))
 
             try
                 download_(full_chamber_link,sgml_fn)
-                create_dir(joinpath(pwd(),"$(which_chamber)_xmls","$year"))
-                xml_fn = joinpath(pwd(),"$(which_chamber)_xmls","$year","$date.xml")
+                create_dir(joinpath(pwd(),"$(which_house)_xmls","$year"))
+                xml_fn = joinpath(pwd(),"$(which_house)_xmls","$year","$date.xml")
                 sgml2xml(sgml_fn,xml_fn)
             catch
                 push!(failed,reps)
