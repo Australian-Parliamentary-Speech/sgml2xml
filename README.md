@@ -1,19 +1,27 @@
-# To get xmls from 1981-1996
-
-Input required: HansardSGML.csv
-
-The sgml2xml function downloads the sgml and converts them into xmls. 
-
-To run house of representatives:
-
-```julia
-sgml2xml_run(:house)
+# Download the SGML files and convert them to XML files
+Step one, in your preferred directory, clone the sgml2xml repo with HTTP or SSH:
 ```
-To run senate:
-
-```julia
-sgml2xml_run(:senate)
+git clone https://github.com/Australian-Parliamentary-Speech/sgml2xml.git
 ```
+
+Go into the directory
+```
+cd sgml2xml
+```
+ 
+In the directory, run:
+```
+./run house
+```
+
+or 
+```
+./run senate
+```
+
+The XML files should be in the directory senate\_xmls or house\_xmls
+
+
 
 # to get xmls from 1997 (only house)
 
