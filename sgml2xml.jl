@@ -18,6 +18,7 @@ function main()
     args = get_args()
     which_house = args["which_house"]
     sgml2xml_run(which_house)
+    one_year_run(which_house)
 end
  
 
@@ -49,7 +50,7 @@ function create_dir(directory_path::String)
     end
 end
 
-function one_year_run()
+function one_year_run(which_house)
     function link_gen(year,month,day)
         link = "parlinfo.aph.gov.au/parlInfo/download/chamber/hansardr/$(year)-$(month)-$(day)/toc_sgml/reps $(year)-$(month)-$(day).sgm"
         return link
@@ -66,8 +67,8 @@ function one_year_run()
 
             try
                 download_(link,sgml_fn)
-                xml_fn = joinpath(pwd(),"xmls","1997","$(year)_$(month)_$(day).xml")
-                create_dir(joinpath(pwd(),"xmls","1997"))
+                xml_fn = joinpath(pwd(),"$(which_house)_xmls","1997","$(year)_$(month)_$(day).xml")
+                create_dir(joinpath(pwd(),"$(which_house)_xmls","1997"))
                 sgml2xml(sgml_fn,xml_fn)
             catch
                 nothing
