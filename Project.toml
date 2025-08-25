@@ -2,6 +2,7 @@
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Cascadia = "54eefc05-d75b-58de-a785-1a3403f0919f"
+CondaPkg = "992eb4ea-22a4-4c89-a5bb-47a3300528ab"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"

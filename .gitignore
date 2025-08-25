@@ -8,5 +8,7 @@
 **/*.zip
 **/*.tar.gz
 **/*.sgm
+.CondaPkg
+*.csv
 #download_utils.jl
 Manifest.toml

@@ -35,13 +35,10 @@ function sgml2xml(fn,outputfn)
     function xml_generate(fn,outputfn)
         sgml_content = read(fn, String)
         soup = BeautifulSoup(sgml_content, "lxml")
-        xml_content = String(soup.prettify())
-        xml_content = replace(
-        xml_content,
-        "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\">" =>
-        "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\" \"hansard.dtd\">"
-    )
-        open(outputfn, "w", encoding="UTF-8") do file
+        xml_content = pystr(soup.prettify())
+        xml_content = xml_content.replace("<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\">", "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\" \"hansard.dtd\">")
+        xml_content = pyconvert(String,xml_content)
+        open(outputfn, "w") do file
             write(file, xml_content)
         end
     end
@@ -115,11 +112,13 @@ function sgml2xml_run(which_house)
             try
                 download_(full_chamber_link,sgml_fn)
                 create_dir(joinpath(pwd(),"$(which_house)_xmls","$year"))
-                xml_fn = joinpath(pwd(),"$(which_house)_xmls","$year","$date.xml")
-                sgml2xml(sgml_fn,xml_fn)
+#                xml_fn = joinpath(pwd(),"$(which_house)_xmls","$year","$date.xml")
+#                sgml2xml(sgml_fn,xml_fn)
             catch
                 push!(failed,reps)
             end
+            xml_fn = joinpath(pwd(),"$(which_house)_xmls","$year","$date.xml")
+            sgml2xml(sgml_fn,xml_fn)  
         end
     end
     open("failed_sgml.csv", "w") do file
