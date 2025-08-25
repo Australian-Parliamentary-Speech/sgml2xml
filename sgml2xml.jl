@@ -1,4 +1,4 @@
-using PyCall
+using PythonCall
 using CSV
 using HTTP
 using ProgressMeter
@@ -30,18 +30,22 @@ function download_(url,outputname)
 end
 
 function sgml2xml(fn,outputfn)
-    py"""
-    from bs4 import BeautifulSoup
-
-    def xml_generate(fn,outputfn):
-        with open(fn, "r", encoding="utf-8") as file:           sgml_content = file.read()
+    bs4 = pyimport("bs4")
+    BeautifulSoup = bs4.BeautifulSoup
+    function xml_generate(fn,outputfn)
+        sgml_content = read(fn, String)
         soup = BeautifulSoup(sgml_content, "lxml")
-        xml_content = soup.prettify()
-        xml_content = xml_content.replace('<!DOCTYPE hansard PUBLIC "-//PARLINFO//DTD HANSARD STORAGE//EN">', '<!DOCTYPE hansard PUBLIC "-//PARLINFO//DTD HANSARD STORAGE//EN" "hansard.dtd">')
-        with open(outputfn, "w", encoding="utf-8") as file:
-            file.write(xml_content)
-    """
-    py"xml_generate"(fn,outputfn)
+        xml_content = String(soup.prettify())
+        xml_content = replace(
+        xml_content,
+        "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\">" =>
+        "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\" \"hansard.dtd\">"
+    )
+        open(outputfn, "w", encoding="UTF-8") do file
+            write(file, xml_content)
+        end
+    end
+    xml_generate(fn,outputfn)
 end
 
 function create_dir(directory_path::String)
