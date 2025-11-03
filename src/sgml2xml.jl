@@ -87,7 +87,7 @@ end
 
 function sgml2xml_run(which_house)
     which_house = Symbol(which_house)
-    csv_fn = "HansardSGML.csv"
+    csv_fn = joinpath(@__DIR__,"HansardSGML.csv")
     rows = CSV.Rows(csv_fn)
     failed = []
     row_no = 0
@@ -108,6 +108,7 @@ function sgml2xml_run(which_house)
             full_chamber_link = "https://$chamber_link"
             sgml_fn = joinpath(pwd(),"$(which_house)_sgmls","$date.sgm")
             create_dir(joinpath(pwd(),"$(which_house)_sgmls"))
+            @show full_chamber_link
 
             try
                 download_(full_chamber_link,sgml_fn)
@@ -117,8 +118,6 @@ function sgml2xml_run(which_house)
             catch
                 push!(failed,reps)
             end
-#            xml_fn = joinpath(pwd(),"$(which_house)_xmls","$year","$date.xml")
-#            sgml2xml(sgml_fn,xml_fn)  
         end
     end
     open("failed_sgml.csv", "w") do file
