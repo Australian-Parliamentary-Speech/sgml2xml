@@ -108,7 +108,6 @@ function sgml2xml_run(which_house)
             full_chamber_link = "https://$chamber_link"
             sgml_fn = joinpath(pwd(),"$(which_house)_sgmls","$date.sgm")
             create_dir(joinpath(pwd(),"$(which_house)_sgmls"))
-            @show full_chamber_link
 
             try
                 download_(full_chamber_link,sgml_fn)
