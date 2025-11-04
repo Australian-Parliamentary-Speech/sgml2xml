@@ -35,9 +35,9 @@ function sgml2xml(fn,outputfn)
     function xml_generate(fn,outputfn)
         sgml_content = read(fn, String)
         soup = BeautifulSoup(sgml_content, "lxml")
-        xml_content = pystr(soup.prettify())
-        xml_content = xml_content.replace("<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\">", "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\" \"hansard.dtd\">")
-        xml_content = pyconvert(String,xml_content)
+        # Convert to string without prettify to avoid stack overflow on deeply nested structures
+        xml_content = pyconvert(String, pystr(soup))
+        xml_content = replace(xml_content, "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\">" => "<!DOCTYPE hansard PUBLIC \"-//PARLINFO//DTD HANSARD STORAGE//EN\" \"hansard.dtd\">")
         open(outputfn, "w") do file
             write(file, xml_content)
         end
