@@ -119,9 +119,11 @@ function sgml2xml_run(which_house)
             end
         end
     end
+    print("Download finished")
     open("failed_sgml.csv", "w") do file
     for f in failed
         println(file, f)
     end
+    print("failed_sgml.csv written")
 end
 end
