@@ -1,4 +1,6 @@
-**/*.xml
+house_xmls/
+senate_xmls/
+senate/
 #**/*.csv
 **/*.png
 **/*.pdf
