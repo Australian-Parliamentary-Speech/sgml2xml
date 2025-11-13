@@ -98,7 +98,7 @@ function sgml2xml_run(which_house)
         day,month,year = split(date,"/")
         month,day = number_pro(parse(Int,month)),number_pro(parse(Int,day))
         date = "$(year)_$(month)_$(day)"
- 
+
         if which_house == :house
             chamber_link = reps
         elseif which_house == :senate
@@ -121,9 +121,9 @@ function sgml2xml_run(which_house)
     end
     print("Download finished")
     open("failed_sgml.csv", "w") do file
-    for f in failed
-        println(file, f)
+        for f in failed
+            println(file, f)
+        end
+        print("failed_sgml.csv written")
     end
-    print("failed_sgml.csv written")
-end
 end

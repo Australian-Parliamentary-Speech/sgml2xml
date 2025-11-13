@@ -17,12 +17,7 @@ exec env LD_LIBRARY_PATH="" $JULIA_CMD -e 'include(popfirst!(ARGS))' "$SOURCE" "
 =#
 
 
-if [ -f Manifest.toml ]; then
-    julia -e 'using Pkg; Pkg.activate("."); println("Manifest.toml exists, skipping instantiate")' 
-else
-    julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate()'
-fi
-
+using Pkg; Pkg.instantiate()
 using Pkg; Pkg.resolve()
 include("src/sgml2xml.jl")
 main()
