@@ -31,9 +31,13 @@ end
 
 function SSGMLPaths(output::AbstractString, ssgml_house::AbstractString)
     base = joinpath(output, "source_sgml", ssgml_house)
+    mkpath(base)
     sgmls = joinpath(base, "sgmls")
+    mkpath(sgmls)
     xmls = joinpath(base, "xmls")
+    mkpath(xmls)
     log = joinpath(base, "logs")
+    mkpath(log)
     return SSGMLPaths(base, sgmls, xmls, log)
 end
 
@@ -85,7 +89,6 @@ function get_args()
 end
 
 function get_logger(path::AbstractString)
-    mkpath(path)
     log = joinpath(path, "$(today()).log")
     rm(log, force=true)
     return TeeLogger(
@@ -115,50 +118,39 @@ function run(; ssgml_house::SSGMLHouse, output::AbstractString)::Bool
 end
 
 function run(::Val{Step1}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
-    path = paths.sgmls
-    mkpath(path)
+    sgmls_out = paths.sgmls
     date = string(today())
-    debug = joinpath(paths.log, date * "_download.csv")
-    file = joinpath(dirname(@__FILE__), SGMLLinks)
-    lines = readlines(file)[2:end]
-    if isdir(path) && length(readdir(path)) == length(lines)
-        @info "Step 1 already completed as $(path) exists and is populated, skipping..."
+    links_in = joinpath(dirname(@__FILE__), SGMLLinks)
+    lines = readlines(links_in)[2:end]
+    if length(readdir(sgmls_out)) == length(lines)
+        @info "Step 1 already completed as $(sgmls_out) exists and is populated, skipping..."
     else
         @info "Running step 1: Downloading $(length(lines)) sgm files..."
-        open(debug, "a") do io
-            @showprogress for line in lines
-                date, senate, reps = split(line, ",")
-                link = "https://" * ((string(ssgml_house) == "house") ? reps : senate)
-                if link == "https://"
-                    continue
-                end
-                day, month, year = split(date, "/")
-                out = joinpath(path, year, "$(year)_$(lpad(month, 2, "0"))_$(lpad(day, 2, "0")).sgm")
-                mkpath(dirname(out))
-                if isfile(out)
-                    continue
-                end
-                try
-                    download_file(link, out; retry=3)
-                catch e
-                    println(io, [link, e])
-                end
+        @showprogress for line in lines
+            date, senate, reps = split(line, ",")
+            link = "https://" * ((string(ssgml_house) == "house") ? reps : senate)
+            if link == "https://"
+                continue
             end
+            day, month, year = split(date, "/")
+            out = joinpath(sgmls_out, year, "$(year)_$(lpad(month, 2, "0"))_$(lpad(day, 2, "0")).sgm")
+            mkpath(dirname(out))
+            download_file(link, out; retry=3)
         end
     end
     return run(Val(Step2); paths=paths, ssgml_house=ssgml_house)
 end
 
 function run(::Val{Step2}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
-    path = paths.xmls
-    files = readdir(paths.sgmls, join=true)
-    if isdir(path) && length(readdir(path)) == length(files)
-        @info "Step 2 already completed as $(path) exists and is populated, skipping..."
+    xmls_out = paths.xmls
+    sgmls = readdir(paths.sgmls, join=true)
+    if length(readdir(xmls_out)) == length(sgmls)
+        @info "Step 2 already completed as $(xmls_out) exists and is populated, skipping..."
     else
         @info "Running step 2: Converting $(length(readlines(joinpath(dirname(@__FILE__), SGMLLinks))) - 1) sgm files to xml files..."
-        @showprogress for year in files
-            for file in readdir(year, join=true)
-                out = joinpath(path, split(split(file, basename(paths.sgmls))[end][2:end], ".")[1] * ".xml")
+        @showprogress for year in sgmls
+            for sgml in readdir(year, join=true)
+                out = joinpath(xmls_out, split(split(sgml, basename(paths.sgmls))[end][2:end], ".")[1] * ".xml")
                 mkpath(dirname(out))
                 if isfile(out)
                     continue
