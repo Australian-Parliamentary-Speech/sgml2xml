@@ -20,7 +20,7 @@ const SGMLLinks::AbstractString = "HansardSGML.csv"
 # 
 
 @enum SSGMLHouse house senate
-@enum SSGMLSteps Step1 Step2 Step3
+@enum SSGMLSteps Step0 Step1 Step2 Step3
 
 struct SSGMLPaths
     base::AbstractString
@@ -31,13 +31,9 @@ end
 
 function SSGMLPaths(output::AbstractString, ssgml_house::AbstractString)
     base = joinpath(output, "source_sgml", ssgml_house)
-    mkpath(base)
     sgmls = joinpath(base, "sgmls")
-    mkpath(sgmls)
     xmls = joinpath(base, "xmls")
-    mkpath(xmls)
     log = joinpath(base, "logs")
-    mkpath(log)
     return SSGMLPaths(base, sgmls, xmls, log)
 end
 
@@ -110,11 +106,45 @@ function run(; ssgml_house::SSGMLHouse, output::AbstractString)::Bool
         @info "Decompressing previous run..."
         decompress(paths.base * ".tar.gz", paths.base, clear=true)
     end
+    mkpath(paths.base)
+    mkpath(paths.sgmls)
+    mkpath(paths.xmls)
+    mkpath(paths.log)
     logger = get_logger(paths.log)
     success = with_logger(logger) do
+        links = joinpath(dirname(@__FILE__), SGMLLinks)
+        if !isfile(links)
+            run(Val(Step0); paths=paths)
+        end
         return run(Val(Step1); paths=paths, ssgml_house=ssgml_house)
     end
     return success
+end
+
+function run(::Val{Step0}; paths::SSGMLPaths)::Bool
+    links_out = joinpath(dirname(@__FILE__), SGMLLinks)
+    open(links_out, "w") do io
+        write(io, "Sitting Day,Senate Link,Reps Link\n")
+    end
+    for ssgml_house in instances(SSGMLHouse)
+        @info "Running step 0: Searching for all $(ssgml_house) sgm files"
+        chamber = string(ssgml_house)
+        char = (chamber == "house") ? "r" : "s"
+        for year in 1981:1:1997, month in 1:1:12, day in 1:1:31
+            date = "$(year)-$(lpad(month,2,"0"))-$(lpad(day,2,"0"))"
+            @show date
+            link = "parlinfo.aph.gov.au/parlInfo/download/chamber/hansard$(char)/$(date)/toc_sgml/$(chamber) $(date).sgm"
+            house = (chamber == "house") ? link : ""
+            senate = (chamber == "senate") ? link : ""
+            success, _ = get_response("https://" * link)
+            if success
+                open(links_out, "a") do io
+                    write(io, "$(lpad(day,2,"0"))/$(lpad(month,2,"0"))/$(year),$(senate),$(house)\n")
+                end
+            end
+        end
+    end
+    return true
 end
 
 function run(::Val{Step1}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
@@ -135,7 +165,7 @@ function run(::Val{Step1}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
             day, month, year = split(date, "/")
             out = joinpath(sgmls_out, year, "$(year)_$(lpad(month, 2, "0"))_$(lpad(day, 2, "0")).sgm")
             mkpath(dirname(out))
-            download_file(link, out; retry=3)
+            download_file(link, out)
         end
     end
     return run(Val(Step2); paths=paths, ssgml_house=ssgml_house)
@@ -155,7 +185,7 @@ function run(::Val{Step2}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
                 if isfile(out)
                     continue
                 end
-                sgml2xml(file, out)
+                sgml2xml(sgml, out)
             end
         end
     end
@@ -164,7 +194,7 @@ end
 
 function run(::Val{Step3}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
     @info "Running step 3: Cleaning and compressing files..."
-    # compress(paths.base, paths.base * ".tar.gz", clear=true)
+    compress(paths.base, paths.base * ".tar.gz", clear=true)
     return true
 end
 
