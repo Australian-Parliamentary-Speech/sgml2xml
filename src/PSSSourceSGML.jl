@@ -1,12 +1,10 @@
 module PSSSourceSGML
 
-using PythonCall
 using ArgParse
-using Dates
 using ProgressMeter
-using Logging
-using LoggingExtras
 using PSSUtils
+using Dates
+using PythonCall
 
 
 #
@@ -64,7 +62,7 @@ function sgml2xml(fn, outputfn)
 end
 
 #
-# === CLI and Logging ===
+# === CLI ===
 # 
 
 function get_args()
@@ -75,49 +73,52 @@ function get_args()
         required = true
         arg_type = SSGMLHouse
         help = "One of `" * join(string.(instances(SSGMLHouse)), ", ") * "`"
+
         "--output", "-o"
         required = false
         arg_type = AbstractString
         default = "output"
         help = "Output directory, defaults to `output/`"
+
+        "--should_compress", "-c"
+        action = :store_true
+        help = "Compress output"
+
+        "--skip", "-s"
+        action = :store_true
+        help = "Skip processing, usually combined with -c to compress a completed run"
+
     end
     return parse_args(s; as_symbols=true)
-end
-
-function get_logger(path::AbstractString)
-    log = joinpath(path, "$(today()).log")
-    rm(log, force=true)
-    return TeeLogger(
-        global_logger(),
-        MinLevelLogger(
-            FileLogger(log),
-            Logging.Info
-        ),
-    )
 end
 
 #
 # === Main ===
 #
 
-function run(; ssgml_house::SSGMLHouse, output::AbstractString)::Bool
+function run(; ssgml_house::SSGMLHouse, output::AbstractString, should_compress::Bool, skip::Bool)::Bool
     paths = SSGMLPaths(output, string(ssgml_house))
-    if isfile(paths.base * ".tar.gz")
-        @info "Decompressing previous run..."
-        decompress(paths.base * ".tar.gz", paths.base, clear=true)
-    end
-    mkpath(paths.base)
-    mkpath(paths.sgmls)
-    mkpath(paths.xmls)
-    mkpath(paths.log)
-    logger = get_logger(paths.log)
-    success = with_logger(logger) do
-        links = joinpath(dirname(@__FILE__), SGMLLinks)
-        if !isfile(links)
-            run(Val(Step0); paths=paths)
+    success = true
+    if !skip
+        if isfile(paths.base * ".tar.zst")
+            @info "Decompressing previous run..."
+            decompress(paths.base * ".tar.zst", paths.base, clear=true)
         end
-        return run(Val(Step1); paths=paths, ssgml_house=ssgml_house)
+        mkpath(paths.base)
+        mkpath(paths.sgmls)
+        mkpath(paths.xmls)
+        mkpath(paths.log)
+        logger = get_logger(paths.log)
+        success &= with_logger(logger) do
+            links = joinpath(dirname(@__FILE__), SGMLLinks)
+            if !isfile(links)
+                run(Val(Step0); paths=paths)
+            end
+            true
+        end
+        success &= run(Val(Step1); paths=paths, ssgml_house=ssgml_house)
     end
+    success &= run(Val(Step3); paths=paths, should_compress=should_compress)
     return success
 end
 
@@ -130,16 +131,18 @@ function run(::Val{Step0}; paths::SSGMLPaths)::Bool
         @info "Running step 0: Searching for all $(ssgml_house) sgm files"
         chamber = string(ssgml_house)
         char = (chamber == "house") ? "r" : "s"
-        for year in 1981:1:1997, month in 1:1:12, day in 1:1:31
+        @showprogress for year in 1981:1:1997, month in 1:1:12, day in 1:1:31
             date = "$(year)-$(lpad(month,2,"0"))-$(lpad(day,2,"0"))"
-            @show date
             link = "parlinfo.aph.gov.au/parlInfo/download/chamber/hansard$(char)/$(date)/toc_sgml/$(chamber) $(date).sgm"
             house = (chamber == "house") ? link : ""
             senate = (chamber == "senate") ? link : ""
-            success, _ = get_response("https://" * link)
+            success, response = get_response("https://" * link)
             if success
-                open(links_out, "a") do io
-                    write(io, "$(lpad(day,2,"0"))/$(lpad(month,2,"0"))/$(year),$(senate),$(house)\n")
+                exists = length(filter(contains("Could not find the file"), split(String(response.body), "\n"))) == 0
+                if exists
+                    open(links_out, "a") do io
+                        write(io, "$(lpad(day,2,"0"))/$(lpad(month,2,"0"))/$(year),$(senate),$(house)\n")
+                    end
                 end
             end
         end
@@ -165,7 +168,7 @@ function run(::Val{Step1}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
             day, month, year = split(date, "/")
             out = joinpath(sgmls_out, year, "$(year)_$(lpad(month, 2, "0"))_$(lpad(day, 2, "0")).sgm")
             mkpath(dirname(out))
-            download_file(link, out)
+            download_file(link, out; filetype="text/sgml")
         end
     end
     return run(Val(Step2); paths=paths, ssgml_house=ssgml_house)
@@ -189,12 +192,14 @@ function run(::Val{Step2}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
             end
         end
     end
-    return run(Val(Step3); paths=paths, ssgml_house=ssgml_house)
+    return true
 end
 
-function run(::Val{Step3}; paths::SSGMLPaths, ssgml_house::SSGMLHouse)::Bool
+function run(::Val{Step3}; paths::SSGMLPaths, should_compress::Bool)::Bool
     @info "Running step 3: Cleaning and compressing files..."
-    compress(paths.base, paths.base * ".tar.gz", clear=true)
+    if should_compress
+        compress(paths.base, paths.base * ".tar.zst", clear=true)
+    end
     return true
 end
 
