@@ -124,25 +124,24 @@ end
 
 function run(::Val{Step0}; paths::SSGMLPaths)::Bool
     links_out = joinpath(dirname(@__FILE__), SGMLLinks)
-    open(links_out, "w") do io
-        write(io, "Sitting Day,Senate Link,Reps Link\n")
+    if !isfile(links_out)
+        open(links_out, "w") do io
+            write(io, "Sitting Day,Senate Link,Reps Link\n")
+        end
     end
     for ssgml_house in instances(SSGMLHouse)
         @info "Running step 0: Searching for all $(ssgml_house) sgm files"
-        chamber = string(ssgml_house)
-        char = (chamber == "house") ? "r" : "s"
+        chamber = string(ssgml_house) == "house" ? "reps" : "senate"
+        char = chamber[1]
         @showprogress for year in 1981:1:1997, month in 1:1:12, day in 1:1:31
             date = "$(year)-$(lpad(month,2,"0"))-$(lpad(day,2,"0"))"
             link = "parlinfo.aph.gov.au/parlInfo/download/chamber/hansard$(char)/$(date)/toc_sgml/$(chamber) $(date).sgm"
-            house = (chamber == "house") ? link : ""
+            house = (chamber == "reps") ? link : ""
             senate = (chamber == "senate") ? link : ""
             success, response = get_response("https://" * link)
             if success
-                exists = length(filter(contains("Could not find the file"), split(String(response.body), "\n"))) == 0
-                if exists
-                    open(links_out, "a") do io
-                        write(io, "$(lpad(day,2,"0"))/$(lpad(month,2,"0"))/$(year),$(senate),$(house)\n")
-                    end
+                open(links_out, "a") do io
+                    write(io, "$(lpad(day,2,"0"))/$(lpad(month,2,"0"))/$(year),$(senate),$(house)\n")
                 end
             end
         end
