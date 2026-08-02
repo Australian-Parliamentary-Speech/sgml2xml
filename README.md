@@ -1,32 +1,16 @@
-# Install Julia
+# PSSSourceXML
 
-To run the package, Julia needs to be installed. For help see https://julialang.org/install/
+`PSSSourceXML` downloads all Hansard XML files that have been published (1998 onward), by crawling the sitemap on the Parlinfo website. It's one of four submodules that make up the [ParlinfoSpeechScraper](../../) pipeline.
 
+## Output layout
 
-# Download the SGML files and convert them to XML files
-Step one, in your preferred directory, clone the sgml2xml repo with HTTP or SSH:
+Given an output directory (`output/` by default), files land in:
+
 ```
-git clone https://github.com/Australian-Parliamentary-Speech/sgml2xml.git
+output/source_xml/<house>/
+├── sitemaps/                                # raw sitemap xml pages
+├── htmls/                                   # downloaded hansard html pages
+├── interim/                                 # intermediate url and link-diff files
+├── xmls/<year>/<year>_<month>_<day>.xml     # xml output
+└── logs/                                    # log output
 ```
-
-Go into the directory
-```
-cd sgml2xml
-```
- 
-In the directory, run:
-```
-./run house
-```
-
-or 
-```
-./run senate
-```
-
-The XML files should be in the directory senate\_xmls or house\_xmls
-
-
-
-
-
